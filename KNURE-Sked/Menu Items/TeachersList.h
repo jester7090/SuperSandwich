@@ -12,6 +12,7 @@
 @property (weak, nonatomic) IBOutlet UITextField *teacherField;
 @property (strong, nonatomic) UIButton *menuBtn;
 - (void) getTeacherId:(NSString *)tchrName;
+- (IBAction)revealMenu:(id)sender;
 @end
 NSMutableArray *teachersList;
 NSMutableArray *fullList;

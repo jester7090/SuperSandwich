@@ -15,6 +15,7 @@
     IBOutlet UIView *skedCell;
     IBOutlet UIView *newSkedCell;
     IBOutlet UIView *timeLineView;
+    IBOutlet UIView *timerLine;
 }
 
 @property (strong, readwrite, nonatomic) REMenu *menu;
@@ -23,6 +24,7 @@
 
 - (void)getLastUpdate;
 - (id)initWithCoder:(NSCoder*)aDecoder;
+- (IBAction)revealMenu:(id)sender;
 
 @end
 

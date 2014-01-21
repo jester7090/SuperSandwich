@@ -8,10 +8,11 @@
 
 #import <UIKit/UIKit.h>
 
-@interface GroupList : UITableViewController <UIGestureRecognizerDelegate, UITableViewDelegate, UITableViewDataSource>
+@interface GroupList : UITableViewController <UIGestureRecognizerDelegate, UITableViewDelegate, UITableViewDataSource> 
 @property (strong, nonatomic) UIButton *menuBtn;
 @property (weak, nonatomic) IBOutlet UITextField *nameField;
 - (void) getGroupId:(NSString *)grName;
+- (IBAction)revealMenu:(id)sender;
 @end
 NSMutableArray *historyList;
 NSMutableArray *fullList;

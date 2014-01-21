@@ -34,6 +34,9 @@
     XRequest = [NSString stringWithFormat:@"%@%@",@"usrNotesXFor",[fullData valueForKey:@"ID"]];
     YRequest = [NSString stringWithFormat:@"%@%@",@"usrNotesYFor",[fullData valueForKey:@"ID"]];
     notes = [[NSMutableArray alloc] init];
+    dates = [[NSMutableArray alloc] init];
+    notesX = [[NSMutableArray alloc] init];
+    notesY = [[NSMutableArray alloc] init];
     if ([fullData valueForKeyPath:datesRequest] != nil) {
         dates = [[[NSUserDefaults standardUserDefaults] valueForKeyPath:datesRequest] mutableCopy];
         notes = [[[NSUserDefaults standardUserDefaults] valueForKeyPath:notesRequest] mutableCopy];
@@ -73,7 +76,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     // Return the number of rows in the section.
-    return [dates count];
+    return [notes count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -84,7 +87,8 @@
     if(cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
     }
-    cell.textLabel.text = [NSString stringWithFormat:@"%@", [dates objectAtIndex:indexPath.row]];
+    cell.textLabel.text = [NSString stringWithFormat:@"%@", [notes objectAtIndex:indexPath.row]];
+    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@", [dates objectAtIndex:indexPath.row]];
     cell.selectionStyle = UITableViewCellSelectionStyleGray;
     return cell;
 }
@@ -124,9 +128,10 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
     NSUserDefaults *fullData = [NSUserDefaults standardUserDefaults];
-    [fullData setValue:cell.textLabel.text forKey:@"CellDate"];
+    [fullData setValue:cell.detailTextLabel.text forKey:@"CellDate"];
     [fullData setValue:[notesX objectAtIndex:indexPath.row] forKey:@"cellX"];
     [fullData setValue:[notesY objectAtIndex:indexPath.row] forKey:@"cellY"];
+    [fullData synchronize];
     UIViewController *topNoteForm = [self.storyboard instantiateViewControllerWithIdentifier:@"Заметка"];
     self.slidingViewController.topViewController = topNoteForm;
     [self.slidingViewController resetTopView];

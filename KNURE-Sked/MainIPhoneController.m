@@ -31,6 +31,7 @@
 
 int remenuSize;
 int standartScrollPosition;
+int maxContentSize;
 NSMutableArray *sorted;
 NSString *userAddLesson;
 NSString *userAddLessonText;
@@ -45,23 +46,7 @@ UIView *remenuView;
      Инициализирует объекты перед началом выполнения, в частности, здесь иницилизируется массив координат всех возможных мест положений skedView. Позднее он будет использоваться при отрисовке новых пар пользователем.
      */
     if(self = [super initWithCoder:aDecoder]) {
-        rects = [[NSMutableArray alloc]init];
-        deletedLessons = [[NSMutableArray alloc]init];
-        float pointX1 = 55;
-        float pointY1 = 30;
-        float pointX2 = 110;
-        float pointY2 = 50;
-        int j = 0;
-        for(int i=0; i<500; i++) {
-            [rects addObject:[NSValue valueWithCGRect:CGRectMake(pointX1, pointY1, pointX2, pointY2)]];
-            pointX1 += 115;
-            if(i == 499 && j < 8) {
-                pointY1 += 55;
-                pointX1 = 55;
-                j++;
-                i = 0;
-            }
-        }
+
     }
     return self;
 }
@@ -78,10 +63,14 @@ UIView *remenuView;
     [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(aTimeUpdate) userInfo:nil repeats:YES];
     if([self isNull]==false) {
         @try {
-            //[self getLastUpdate];
-            [self createScrollMenu];
-            [self createTimeMenu];
             [self initToggleMenu];
+             dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+             dispatch_async(queue, ^{
+                 dispatch_async(dispatch_get_main_queue(), ^{
+                     [self createScrollMenu];
+                     [self createTimeMenu];
+                 });
+             });
         }
         @catch(NSException *e) {
         
@@ -95,11 +84,17 @@ UIView *remenuView;
      Данные берутся из userdefaults, с ключем, который равен id группы или преподавателя.
      полученные данные отрисовываются по очень большому и непродуманному алгоритму.
      */
+    maxContentSize = 55*5;
     int dayShift = 0;
     int lessonShift = 25;
     int scrollViewSize = 0;
     int countDuplitateDays = 0;
-    int maxContentSize = 55*5;
+    UIView *dateGrid;
+    UILabel *date;
+    UILabel *sked;
+    NSString *prewDate;
+    NSString *tempDay;
+    NSArray *temp;
     NSString *curId = [[NSUserDefaults standardUserDefaults] valueForKey:@"ID"];
     NSUserDefaults *fullLessonsData = [NSUserDefaults standardUserDefaults];
     sorted = [fullLessonsData objectForKey:curId];
@@ -110,9 +105,9 @@ UIView *remenuView;
     [mainSkedView setShowsHorizontalScrollIndicator:NO];
     [mainSkedView setShowsVerticalScrollIndicator:NO];
     [self mainScrollViewAddDOUBLETAPGestureRecognizer];
-    [self mainScrollViewAddLONGPRESSGestureRecognizer];
     NSString *notesXRequest = [NSString stringWithFormat:@"%@%@",@"usrNotesXFor",[fullLessonsData valueForKey:@"ID"]];
     NSString *notesYRequest = [NSString stringWithFormat:@"%@%@",@"usrNotesYFor",[fullLessonsData valueForKey:@"ID"]];
+    
     for(int i=1; i<sorted.count; i++) {
         //Раскомментировать, чтобы увидеть что именно выводится.
         //NSString *mydate = [formatter stringFromDate:[[sorted objectAtIndex:i] valueForKey:@"date"]];
@@ -124,11 +119,11 @@ UIView *remenuView;
             continue;
         }
         
-        UIView *dateGrid = [[UIView alloc]initWithFrame:CGRectMake(dayShift + 55, 5, 110, 20)];
+        dateGrid = [[UIView alloc]initWithFrame:CGRectMake(dayShift + 55, 5, 110, 20)];
         dateGrid.backgroundColor = [UIColor whiteColor];
-        UILabel *date = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 110, 20)];
-        UILabel *sked = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 110, 50)];
-        NSString *prewDate = [formatter stringFromDate:[[sorted objectAtIndex:i] valueForKey:@"date"]];
+        date = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 110, 20)];
+        sked = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 110, 50)];
+        prewDate = [formatter stringFromDate:[[sorted objectAtIndex:i] valueForKey:@"date"]];
         
         if(i>1 && [prewDate isEqual:[formatter stringFromDate:[[sorted objectAtIndex:i-1] valueForKey:@"date"]]]) {
             countDuplitateDays = 1;
@@ -156,73 +151,14 @@ UIView *remenuView;
             continue;
         }
         
-        NSString *tempDay = [[sorted objectAtIndex:i] valueForKey:@"object"];
-        NSArray *temp = [tempDay componentsSeparatedByString:@" "];
-        if([[temp objectAtIndex:1] isEqual: @"2"]) {
-            lessonShift += 55*1;
-            goto m1;
-        } else
-            if([[temp objectAtIndex:1] isEqual: @"3"]) {
-                lessonShift += 55*2;
-                goto m1;
-            } else
-                if([[temp objectAtIndex:1] isEqual: @"4"]) {
-                    lessonShift += 55*3;
-                    goto m1;
-                } else
-                    if([[temp objectAtIndex:1] isEqual: @"5"]) {
-                        lessonShift += 55*4;
-                        goto m1;
-                    } else
-                        if([[temp objectAtIndex:1] isEqual: @"6"]) {
-                            lessonShift += 55*5;
-                            goto m1;
-                        } else
-                            if([[temp objectAtIndex:1] isEqual: @"7"]) {
-                                lessonShift += 55*6;
-                                maxContentSize = 55*6;
-                                goto m1;
-                            } else
-                                if([[temp objectAtIndex:1] isEqual: @"8"]) {
-                                    lessonShift += 55*7;
-                                    maxContentSize = 55*7;
-                                }
-    m1:
-        if ([temp containsObject:@"Лк"]) {
-            skedCell = [[UIView alloc]initWithFrame:CGRectMake(dayShift + 55, lessonShift + 5, 110, 50)];
-            skedCell.backgroundColor = [UIColor colorWithRed:1 green:0.961 blue:0.835 alpha:1.0];
-            goto m2;
-        } else
-            if ([temp containsObject:@"Пз"]) {
-                skedCell = [[UIView alloc]initWithFrame:CGRectMake(dayShift + 55, lessonShift + 5, 110, 50)];
-                skedCell.backgroundColor = [UIColor colorWithRed:0.78 green:0.922 blue:0.769 alpha:1.0];
-                goto m2;
-            } else
-                if ([temp containsObject:@"Лб"]) {
-                    skedCell = [[UIView alloc]initWithFrame:CGRectMake(dayShift + 55, lessonShift + 5, 110, 50)];
-                    skedCell.backgroundColor = [UIColor colorWithRed:0.804 green:0.8 blue:1 alpha:1.0];
-                    goto m2;
-                } else
-                    if ([temp containsObject:@"Конс"]) {
-                        skedCell = [[UIView alloc]initWithFrame:CGRectMake(dayShift + 55, lessonShift + 5, 110, 50)];
-                        skedCell.backgroundColor = [UIColor colorWithRed:0.933 green:0.933 blue:0.933 alpha:1.0];
-                        goto m2;
-                    } else
-                        if ([temp containsObject:@"ЕкзУ"]) {
-                            skedCell = [[UIView alloc]initWithFrame:CGRectMake(dayShift + 55, lessonShift + 5, 110, 50)];
-                            skedCell.backgroundColor = [UIColor colorWithRed:0.561 green:0.827 blue:0.988 alpha:1.0];
-                            goto m2;
-                        } else
-                            if ([temp containsObject:@"ЕкзП"]) {
-                                skedCell = [[UIView alloc]initWithFrame:CGRectMake(dayShift + 55, lessonShift + 5, 110, 50)];
-                                skedCell.backgroundColor = [UIColor colorWithRed:0.561 green:0.827 blue:0.988 alpha:1.0];
-                                goto m2;
-                            } else
-                                if ([temp containsObject:@"Зал"]) {
-                                    skedCell = [[UIView alloc]initWithFrame:CGRectMake(dayShift + 55, lessonShift + 5, 110, 50)];
-                                    skedCell.backgroundColor = [UIColor colorWithRed:0.761 green:0.627 blue:0.722 alpha:1.0];
-                                }
-    m2:
+        tempDay = [[sorted objectAtIndex:i] valueForKey:@"object"];
+        temp = [tempDay componentsSeparatedByString:@" "];
+        
+        lessonShift += [self getLessonShift:[temp objectAtIndex:1]];
+        
+        skedCell = [[UIView alloc]initWithFrame:CGRectMake(dayShift + 55, lessonShift + 5, 110, 50)];
+        skedCell.backgroundColor = [self getCellColor:temp];
+        
         sked.text = [tempDay stringByReplacingCharactersInRange:NSMakeRange(0, 2) withString:@""];
         sked.numberOfLines = 3;
         sked.lineBreakMode = 5;
@@ -239,7 +175,6 @@ UIView *remenuView;
         [dateGrid addSubview:date];
         [skedCell addSubview:sked];
     }
-    [self drawUserChanges];
     @try {
         NSMutableArray *notesX = [[fullLessonsData valueForKeyPath:notesXRequest] mutableCopy];
         NSMutableArray *notesY = [[fullLessonsData valueForKeyPath:notesYRequest] mutableCopy];
@@ -258,6 +193,62 @@ UIView *remenuView;
     [self.view addSubview:mainSkedView];
 }
 
+- (int)getLessonShift:(NSString *)lessonNumber {
+    if([lessonNumber isEqual:@"1"])
+        return 0;
+    
+    if([lessonNumber isEqual: @"2"])
+        return 55*1;
+    
+    if([lessonNumber isEqual: @"3"])
+        return 55*2;
+    
+    if([lessonNumber isEqual: @"4"])
+        return 55*3;
+    
+    if([lessonNumber isEqual: @"5"])
+        return 55*4;
+    
+    if([lessonNumber isEqual: @"6"])
+        return 55*5;
+    
+    if([lessonNumber isEqual: @"7"]) {
+        maxContentSize = 55*6;
+        return 55*6;
+    }
+    
+    if([lessonNumber isEqual: @"8"]) {
+        maxContentSize = 55*7;
+        return 55*7;
+    }
+    return 0;
+}
+
+- (UIColor *)getCellColor:(NSArray *)lesson {
+    if ([lesson containsObject:@"Лк"])
+        return [UIColor colorWithRed:1 green:0.961 blue:0.835 alpha:1.0];
+
+    if ([lesson containsObject:@"Пз"])
+        return [UIColor colorWithRed:0.78 green:0.922 blue:0.769 alpha:1.0];
+    
+    if ([lesson containsObject:@"Лб"])
+        return [UIColor colorWithRed:0.804 green:0.8 blue:1 alpha:1.0];
+    
+    if ([lesson containsObject:@"Конс"])
+        return [UIColor colorWithRed:0.933 green:0.933 blue:0.933 alpha:1.0];
+                    
+    if ([lesson containsObject:@"ЕкзУ"])
+        return [UIColor colorWithRed:0.561 green:0.827 blue:0.988 alpha:1.0];
+    
+    if ([lesson containsObject:@"ЕкзП"])
+        return [UIColor colorWithRed:0.561 green:0.827 blue:0.988 alpha:1.0];
+    
+    if ([lesson containsObject:@"Зал"])
+        return [UIColor colorWithRed:0.761 green:0.627 blue:0.722 alpha:1.0];
+    
+    return [UIColor colorWithRed:1 green:0.859 blue:0.957 alpha:1.0];
+}
+
 - (void) createTimeMenu {
     /*
      * Создаёт временную шкалу.
@@ -265,11 +256,12 @@ UIView *remenuView;
     int framecounter = 0;
     CGPoint content = [mainSkedView contentOffset];
     CGRect contentOffset = [mainSkedView bounds];
-    timeLineView = [[UIScrollView alloc] initWithFrame:CGRectMake(contentOffset.origin.x, contentOffset.origin.y+30+(content.y*(-1)), 50, 600)];
+    timeLineView = [[UIScrollView alloc] initWithFrame:CGRectMake(contentOffset.origin.x, contentOffset.origin.y+30+(content.y*(-1)), 48, 600)];
     for (int i=1; i<9; i++) {
-        UIView *timeGrid = [[UIView alloc]initWithFrame:CGRectMake(0, 0 + framecounter, 50, 50)];
-        UILabel *timeStart = [[UILabel alloc]initWithFrame:CGRectMake(5, -10, 50, 50)];
-        UILabel *timeEnd = [[UILabel alloc]initWithFrame:CGRectMake(5, 10, 50, 50)];
+        UIView *timeGrid = [[UIView alloc]initWithFrame:CGRectMake(0, 0 + framecounter, 45, 50)];
+        UIView *spread = [[UIView alloc]initWithFrame:CGRectMake(0, -3 + framecounter, 47, 1)];
+        UILabel *timeStart = [[UILabel alloc]initWithFrame:CGRectMake(-1, -10, 45, 50)];
+        UILabel *timeEnd = [[UILabel alloc]initWithFrame:CGRectMake(-1, 10, 45, 50)];
         switch (i) {
             case 1:
                 timeStart.text = @"7:45";
@@ -305,7 +297,10 @@ UIView *remenuView;
                 break;
         }
         timeStart.backgroundColor = [UIColor clearColor];
+        timeStart.textAlignment = NSTextAlignmentRight;
         timeEnd.backgroundColor = [UIColor clearColor];
+        timeEnd.textAlignment = NSTextAlignmentRight;
+        spread.backgroundColor = [UIColor blackColor];
         [timeStart setFont:[UIFont fontWithName: @"Helvetica Neue" size: 16.0f]];
         [timeEnd setFont:[UIFont fontWithName: @"Helvetica Neue" size: 16.0f]];
         [timeGrid addSubview:timeStart];
@@ -313,6 +308,7 @@ UIView *remenuView;
         timeGrid.backgroundColor = [UIColor whiteColor];
         framecounter += 55;
         [timeLineView addSubview:timeGrid];
+        [timeLineView addSubview:spread];
         timeLineView.backgroundColor = [UIColor whiteColor];
         [mainSkedView addSubview:timeLineView];
     }
@@ -321,7 +317,7 @@ UIView *remenuView;
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     CGPoint content = [mainSkedView contentOffset];
     CGRect contentOffset = [mainSkedView bounds];
-    CGRect center = CGRectMake(contentOffset.origin.x, contentOffset.origin.y+30+(content.y*(-1)), 50, 600);
+    CGRect center = CGRectMake(contentOffset.origin.x, contentOffset.origin.y+30+(content.y*(-1)), 48, 600);
     [timeLineView setFrame:center];
 }
 
@@ -363,7 +359,7 @@ UIView *remenuView;
 
 - (void) initializeSlideMenu {
     /*
-     Инициализирует slide menu.
+     Инициализирует боковое меню.
      */
     self.view.layer.shadowOpacity = 0.75f;
     self.view.layer.shadowRadius = 10.0f;
@@ -373,15 +369,9 @@ UIView *remenuView;
     }
     self.slidingViewController.panGesture.delegate = self;
     [self.view addGestureRecognizer:self.slidingViewController.panGesture];
-    self.menuBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    menuBtn.frame = CGRectMake(13, 30, 34, 24);
-    [menuBtn setBackgroundImage:[UIImage imageNamed:@"menuButton.png"] forState:UIControlStateNormal];
-    [menuBtn addTarget:self action:@selector(revealMenu:) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:self.menuBtn];
 }
 
 - (IBAction)revealMenu:(id)sender {
-    //Событие срабатывает, если пользователь отпускает slide menu.
     [self.slidingViewController anchorTopViewTo:ECRight];
 }
 
@@ -473,13 +463,13 @@ UIView *remenuView;
         if ([fullData valueForKeyPath:tempRequest] != nil) {
             NSMutableArray *noteDates = [fullData valueForKeyPath:tempRequest];
             if ([noteDates containsObject:cellDT]) {
-                UIActionSheet *cellOptions = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:@"Отмена" destructiveButtonTitle:@"Убрать пару" otherButtonTitles:@"Редактировать заметку", @"Напомнить",nil];
+                UIActionSheet *cellOptions = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:@"Отмена" destructiveButtonTitle:@"Убрать пару" otherButtonTitles:@"Редактировать заметку", nil];
                 [cellOptions setActionSheetStyle:UIActionSheetStyleBlackOpaque];
                 [cellOptions showInView:self.view];
                 return;
             }
         }
-        UIActionSheet *cellOptions = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:@"Отмена" destructiveButtonTitle:@"Убрать пару" otherButtonTitles:@"Добавить заметку", @"Напомнить",nil];
+        UIActionSheet *cellOptions = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:@"Отмена" destructiveButtonTitle:@"Убрать пару" otherButtonTitles:@"Добавить заметку", nil];
         [cellOptions setActionSheetStyle:UIActionSheetStyleBlackOpaque];
         [cellOptions showInView:self.view];
     }
@@ -685,7 +675,7 @@ UIView *remenuView;
     }
 }
 
--(BOOL) isNull {
+- (BOOL) isNull {
     NSString *curId = [[NSUserDefaults standardUserDefaults] valueForKey:@"ID"];
     if(curId.length < 1) {
         UILabel *message = [[UILabel alloc]initWithFrame:CGRectMake(0, 95, self.view.frame.size.width, 300)];

@@ -53,7 +53,7 @@
 }
 
 - (void)exitView {
-    UIViewController *mainForm = [self.storyboard instantiateViewControllerWithIdentifier:@"Расписание"];
+    UIViewController *mainForm = [self.storyboard instantiateViewControllerWithIdentifier:@"Заметки"];
     self.slidingViewController.topViewController = mainForm;
     [self.slidingViewController resetTopView];
 }
