@@ -28,7 +28,17 @@
     [super viewDidLoad];
     allResults = [[NSMutableArray alloc] init];
     selectedTeachers = [[NSMutableArray alloc]init];
-    [self getNameOfTeachers];
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+    dispatch_async(queue, ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            HUD = [[MBProgressHUD alloc] initWithView:self.navigationController.view];
+            [self.navigationController.view addSubview:HUD];
+            HUD.mode = MBProgressHUDModeDeterminate;
+            HUD.delegate = self;
+            HUD.labelText = @"Загружаю список...";
+            [HUD showWhileExecuting:@selector(getNameOfTeachers) onTarget:self withObject:nil animated:YES];
+        });
+    });
 }
 
 - (void)didReceiveMemoryWarning {
@@ -61,8 +71,8 @@
 }
 
 - (void) getNameOfTeachers{
+    float progress = 0.0f;
     @try {
-        
         NSString *matchAllResult;
         NSString *htmlResponseString;
         NSArray *facults = [NSArray arrayWithObjects:@"95", @"114", @"56", @"152", @"192", @"287", @"237", @"6", @"64", @"128",nil];
@@ -81,6 +91,7 @@
         NSString *URL = @"http://cist.kture.kharkov.ua/ias/app/tt/WEB_IAS_TT_AJX_TEACHS?p_id_fac=";
         for (int count = 0; count != facults.count; count++)
         {
+            HUD.progress = progress;
             if (count == 0) {kafedra = kafedra1;}
             if (count == 1) {kafedra = kafedra2;}
             if (count == 2) {kafedra = kafedra3;}
@@ -114,12 +125,15 @@
                     [allResults addObject:matchAllResult];
                 }
             }
+            progress += 0.1;
         }
+        HUD.progress = 1.0f;
     }
     @catch (NSException * e) {
         UIAlertView *endGameMessage = [[UIAlertView alloc] initWithTitle:@"Ошибка" message:@"" delegate:self cancelButtonTitle:@"Ок" otherButtonTitles: nil];
         [endGameMessage show];
     }
+    [self.tableView reloadData];
 }
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {

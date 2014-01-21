@@ -7,8 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "MBProgressHUD.h"
 
-@interface TeacherListAddTeacher : UITableViewController <UISearchBarDelegate, UITableViewDataSource> {
+@interface TeacherListAddTeacher : UITableViewController <UISearchBarDelegate, UITableViewDataSource, MBProgressHUDDelegate> {
+    MBProgressHUD *HUD;
     NSMutableArray *allResults;
     NSMutableArray *searchResults;
     NSMutableArray *selectedTeachers;

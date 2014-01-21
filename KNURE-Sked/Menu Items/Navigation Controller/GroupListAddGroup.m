@@ -29,7 +29,17 @@
     
     allResults = [[NSMutableArray alloc]init];
     selectedGroups = [[NSMutableArray alloc]init];
-    [self getNameOfGroup];
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+    dispatch_async(queue, ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            HUD = [[MBProgressHUD alloc] initWithView:self.navigationController.view];
+            [self.navigationController.view addSubview:HUD];
+            HUD.mode = MBProgressHUDModeDeterminate;
+            HUD.delegate = self;
+            HUD.labelText = @"Загружаю список...";
+            [HUD showWhileExecuting:@selector(getNameOfGroup) onTarget:self withObject:nil animated:YES];
+        });
+    });
 }
 
 - (void)didReceiveMemoryWarning {
@@ -62,6 +72,7 @@
 }
 
 - (void) getNameOfGroup{
+    float progress = 0.0f;
     @try {
         NSString *matchAllResult;
         NSString *htmlResponseString;
@@ -81,6 +92,7 @@
         NSString *URL = @"http://cist.kture.kharkov.ua/ias/app/tt/WEB_IAS_TT_AJX_GROUPS?p_id_fac=";
         for (int count = 0; count != facults.count; count++)
         {
+            HUD.progress = progress;
             NSArray *matches;
             
             NSString *request = [NSString stringWithFormat:@"%@%@", URL, [facults objectAtIndex:count]];
@@ -101,12 +113,15 @@
                 matchAllResult = [matchAllResult substringToIndex:[matchAllResult length] - 1];
                 [allResults addObject:matchAllResult];
             }
+            progress += 0.09f;
         }
+        HUD.progress = 1.0f;
     }
     @catch (NSException * e) {
         UIAlertView *endGameMessage = [[UIAlertView alloc] initWithTitle:@"Ошибка" message:@"Не удаеться загрузить спиcок групп, проверте ваще подключение к интеренету" delegate:self cancelButtonTitle:@"Ок" otherButtonTitles: nil];
         [endGameMessage show];
     }
+    [self.tableView reloadData];
 }
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {

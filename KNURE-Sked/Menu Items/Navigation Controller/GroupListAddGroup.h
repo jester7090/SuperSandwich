@@ -7,8 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "MBProgressHUD.h"
 
-@interface GroupListAddGroup : UITableViewController <UISearchBarDelegate, UITableViewDataSource> {
+@interface GroupListAddGroup : UITableViewController <UISearchBarDelegate, UITableViewDataSource, MBProgressHUDDelegate> {
+    MBProgressHUD *HUD;
     NSMutableArray *allResults;
     NSMutableArray *searchResults;
     NSMutableArray *selectedGroups;
